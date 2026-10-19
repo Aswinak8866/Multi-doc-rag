@@ -11,7 +11,7 @@ Ask questions across multiple PDF, DOCX and TXT files and get answers with sourc
 - Source citations with file name, page and snippet
 - FastAPI backend with /ask, /upload, /sources and /health endpoints
 - Streamlit chat UI
-- Automated tests (pytest) and a Dockerfile
+- Automated tests (pytest)
 
 ## Architecture
 
@@ -28,7 +28,7 @@ Ask questions across multiple PDF, DOCX and TXT files and get answers with sourc
 
 ## Tech Stack
 
-Python, LangChain, ChromaDB, sentence-transformers, rank_bm25, Groq (openai/gpt-oss-120b), FastAPI, Streamlit, pytest, Docker
+Python, LangChain, ChromaDB, sentence-transformers, rank_bm25, Groq (openai/gpt-oss-120b), FastAPI, Streamlit, pytest
 
 ## Project Structure
 
@@ -42,7 +42,6 @@ Python, LangChain, ChromaDB, sentence-transformers, rank_bm25, Groq (openai/gpt-
       streamlit_app.py chat interface
     tests/
       test_basic.py    unit and API tests
-    Dockerfile
 
 ## Run Locally
 
@@ -73,11 +72,6 @@ Python, LangChain, ChromaDB, sentence-transformers, rank_bm25, Groq (openai/gpt-
 
     pytest -q
 
-## Run with Docker
-
-    docker build -t rag-app .
-    docker run -p 8501:8501 --env-file .env rag-app
-
 ## API
 
 - POST /upload : upload and index a document
@@ -90,3 +84,5 @@ Interactive docs at http://localhost:8000/docs
 ## Screenshots
 
 ![Chat UI](docs/screenshot-chat.png)
+
+
