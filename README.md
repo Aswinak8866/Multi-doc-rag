@@ -88,3 +88,5 @@ Interactive docs at http://localhost:8000/docs
 
 
 
+
+![Document filter and follow-up questions](docs/screenshot-multiselect.png)
