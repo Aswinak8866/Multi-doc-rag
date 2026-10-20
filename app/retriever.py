@@ -7,7 +7,6 @@ from sentence_transformers import CrossEncoder
 from app.vectorstore import get_vectorstore
 
 RERANK_MODEL = "BAAI/bge-reranker-base"
-MIN_RERANK_SCORE = 0.1  # 0-1 scale. Idhukku kammi irundha chunk irrelevant
 
 
 def tokenize(text: str):
@@ -53,33 +52,49 @@ class HybridRetriever:
         """Index aagirukkura file names list."""
         return sorted({d.metadata["source"] for d in self.docs})
 
-    def vector_search(self, query: str, n: int = 20):
-        return self.vs.similarity_search(query, k=n)
+    def vector_search(self, query: str, n: int = 20, sources: list[str] | None = None):
+        flt = {"source": {"$in": sources}} if sources else None
+        return self.vs.similarity_search(query, k=n, filter=flt)
 
-    def bm25_search(self, query: str, n: int = 20):
+    def bm25_search(self, query: str, n: int = 20, sources: list[str] | None = None):
         scores = self.bm25.get_scores(tokenize(query))
-        top = sorted(range(len(self.docs)), key=lambda i: scores[i], reverse=True)[:n]
-        return [self.docs[i] for i in top]
+        order = sorted(range(len(self.docs)), key=lambda i: scores[i], reverse=True)
+        results = []
+        for i in order:
+            d = self.docs[i]
+            if sources and d.metadata["source"] not in sources:
+                continue
+            results.append(d)
+            if len(results) == n:
+                break
+        return results
 
-    def rerank(self, query: str, docs, min_score: float = MIN_RERANK_SCORE):
-        """Score kudutthu sort pannum, irrelevant chunks-ah neekidum."""
+    def rerank(self, query: str, docs):
+        """Question + chunk pair-ku score kudutthu, best chunks-ah mela kondu varum."""
         if not docs:
             return docs
         if self.reranker is None:
             self.reranker = CrossEncoder(RERANK_MODEL)
         scores = self.reranker.predict([(query, d.page_content) for d in docs])
         order = sorted(range(len(docs)), key=lambda i: scores[i], reverse=True)
-        kept = [docs[i] for i in order if scores[i] >= min_score]
-        return kept or [docs[order[0]]]  # onnume pass aagala-na best 1 mattum
+        return [docs[i] for i in order]
 
-    def search(self, query: str, k: int = 5, hybrid: bool = True, rerank: bool = True, candidates: int = 20):
+    def search(
+        self,
+        query: str,
+        k: int = 8,
+        hybrid: bool = True,
+        rerank: bool = True,
+        candidates: int = 20,
+        sources: list[str] | None = None,
+    ):
         if not self.docs:  # Documents onnume illa-na empty list
             return []
 
-        vec = self.vector_search(query, candidates)
+        vec = self.vector_search(query, candidates, sources)
 
         if hybrid:
-            bm = self.bm25_search(query, candidates)
+            bm = self.bm25_search(query, candidates, sources)
             by_key = {doc_key(d): d for d in vec + bm}
             fused = rrf([[doc_key(d) for d in vec], [doc_key(d) for d in bm]])
             results = [by_key[key] for key in fused]

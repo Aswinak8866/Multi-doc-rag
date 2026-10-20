@@ -6,9 +6,10 @@ Ask questions across multiple PDF, DOCX and TXT files and get answers with sourc
 
 - Upload PDF, DOCX and TXT files from the UI and index them instantly
 - Hybrid retrieval: vector search (semantic) + BM25 (keyword), merged with Reciprocal Rank Fusion
-- Cross-encoder reranker (bge-reranker-base) with a minimum score filter
+- Cross-encoder reranker (bge-reranker-base)
 - Follow-up questions: the question is rewritten as a standalone query using chat history
 - Source citations with file name, page and snippet
+- Choose which documents to search in (multi-select, default: all documents)
 - FastAPI backend with /ask, /upload, /sources and /health endpoints
 - Streamlit chat UI
 - Automated tests (pytest)
@@ -21,7 +22,7 @@ Ask questions across multiple PDF, DOCX and TXT files and get answers with sourc
     Question -> Rewrite using chat history
              -> Vector search (top 20) + BM25 (top 20)
              -> Reciprocal Rank Fusion
-             -> Cross-encoder rerank + score filter
+             -> Cross-encoder rerank
              -> LLM (Groq) -> Answer + Sources
 
     Streamlit UI  <->  FastAPI  <->  RAG pipeline
@@ -84,5 +85,6 @@ Interactive docs at http://localhost:8000/docs
 ## Screenshots
 
 ![Chat UI](docs/screenshot-chat.png)
+
 
 

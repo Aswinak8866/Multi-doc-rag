@@ -36,6 +36,7 @@ class AskRequest(BaseModel):
     history: list[Message] = []
     hybrid: bool = True
     rerank: bool = True
+    sources: list[str] | None = None  # None = ella documents-um
 
 
 @app.get("/health")
@@ -74,6 +75,7 @@ def ask(req: AskRequest):
             history=history,
             hybrid=req.hybrid,
             rerank=req.rerank,
+            sources=req.sources,
         )
         logger.info("Q: %s | sources: %d", req.question, len(result["sources"]))
         return result

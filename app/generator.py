@@ -17,7 +17,8 @@ ANSWER_PROMPT = ChatPromptTemplate.from_messages(
             "You are a helpful assistant. Answer ONLY using the context below. "
             "If the answer is not in the context, say: "
             "\"I don't know based on the provided documents.\" "
-            "Be clear and concise.\n\n"
+            "Be clear and concise. When asked to list items, list every item "
+            "found in the context.\n\n"
             "Context:\n{context}",
         ),
         ("placeholder", "{history}"),
@@ -60,12 +61,14 @@ class RAGPipeline:
         )
         return self.llm.invoke(messages).content.strip()
 
-    def ask(self, question, history=None, k=5, hybrid=True, rerank=True):
+    def ask(self, question, history=None, k=8, hybrid=True, rerank=True, sources=None):
         # 1. Follow-up-ah standalone question-ah maathu
         search_query = self._standalone_question(question, history)
 
-        # 2. Relevant chunks search pannu
-        docs = self.retriever.search(search_query, k=k, hybrid=hybrid, rerank=rerank)
+        # 2. Relevant chunks search pannu (sources irundha andha files-la mattum)
+        docs = self.retriever.search(
+            search_query, k=k, hybrid=hybrid, rerank=rerank, sources=sources
+        )
         if not docs:
             return {
                 "answer": "No documents indexed yet. Upload a document first.",
@@ -88,14 +91,14 @@ class RAGPipeline:
         answer = self.llm.invoke(messages).content
 
         # 5. Sources: same file + page repeat aagaama
-        seen, sources = set(), []
+        seen, source_list = set(), []
         for d in docs:
             page = d.metadata.get("page", "-")
             key = (d.metadata["source"], page)
             if key in seen:
                 continue
             seen.add(key)
-            sources.append(
+            source_list.append(
                 {
                     "source": d.metadata["source"],
                     "page": page,
@@ -103,7 +106,7 @@ class RAGPipeline:
                 }
             )
 
-        return {"answer": answer, "sources": sources, "search_query": search_query}
+        return {"answer": answer, "sources": source_list, "search_query": search_query}
 
 
 if __name__ == "__main__":

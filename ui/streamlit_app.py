@@ -31,11 +31,18 @@ with st.sidebar:
             else:
                 st.error(f"{f.name}: {r.text}")
 
+    names = []
     try:
         names = requests.get(f"{API_URL}/sources", timeout=60).json()["sources"]
-        st.caption("Indexed: " + ", ".join(names))
     except Exception:
         st.caption("Indexed documents list kidaikkala (API run aagudha check pannu)")
+
+    selected = st.multiselect(
+        "Search in (default: all documents)",
+        options=names,
+        default=names,
+        help="Venumna oru file illa rendu moonu files mattum select pannu. Edhuvum select pannala-na ella documents-layum search aagum.",
+    )
 
     st.divider()
     st.header("Settings")
@@ -44,6 +51,9 @@ with st.sidebar:
     if st.button("Clear chat"):
         st.session_state.messages = []
         st.rerun()
+
+# Ella files select aanaalum, edhuvum select pannalanaalum -> None (ella documents)
+sources_filter = None if (not selected or len(selected) == len(names)) else selected
 
 # ---------------- Chat state ----------------
 if "messages" not in st.session_state:
@@ -86,6 +96,7 @@ if question:
                         "history": history,
                         "hybrid": hybrid,
                         "rerank": rerank,
+                        "sources": sources_filter,
                     },
                     timeout=120,
                 )
